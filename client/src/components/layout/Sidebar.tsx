@@ -76,17 +76,17 @@ export default function Sidebar({ className, onClose }: SidebarProps) {
             const Icon = item.icon;
             
             return (
-              <Link key={item.path} href={item.path}>
-                <a
-                  className={cn(
-                    "flex items-center px-4 py-3 rounded-md mb-1 transition-colors",
-                    "hover:bg-muted",
-                    isActive && "text-primary bg-primary/10 border-l-4 border-primary"
-                  )}
-                >
-                  <Icon className="mr-3 h-5 w-5" />
-                  <span>{item.label}</span>
-                </a>
+              <Link 
+                key={item.path} 
+                href={item.path}
+                className={cn(
+                  "flex items-center px-4 py-3 rounded-md mb-1 transition-colors",
+                  "hover:bg-muted",
+                  isActive && "text-primary bg-primary/10 border-l-4 border-primary"
+                )}
+              >
+                <Icon className="mr-3 h-5 w-5" />
+                <span>{item.label}</span>
               </Link>
             );
           })}

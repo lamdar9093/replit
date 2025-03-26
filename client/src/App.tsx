@@ -10,6 +10,7 @@ import Employees from "@/pages/Employees";
 import Schedule from "@/pages/Schedule";
 import TimeOff from "@/pages/TimeOff";
 import Messages from "@/pages/Messages";
+import Settings from "@/pages/Settings";
 import Login from "@/pages/Login";
 import NotFound from "@/pages/not-found";
 
@@ -24,6 +25,7 @@ function App() {
           <Route path="/schedule" component={Schedule} />
           <Route path="/time-off" component={TimeOff} />
           <Route path="/messages" component={Messages} />
+          <Route path="/settings" component={Settings} />
           <Route component={NotFound} />
         </Switch>
         <Toaster />
