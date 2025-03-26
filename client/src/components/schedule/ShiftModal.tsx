@@ -138,16 +138,21 @@ export default function ShiftModal({ isOpen, onClose, shift, onSave, onDelete }:
       return;
     }
 
+    // S'assurer que la date est au bon format
+    const formattedDate = new Date(date);
+    
     const shiftData = {
       ...(shift?.id ? { id: shift.id } : {}),
       userId: parseInt(employeeId),
-      date: new Date(date).toISOString(),
+      date: formattedDate.toISOString(),
       startTime: `${startTime}:00`,
       endTime: `${endTime}:00`,
       department,
       notes,
       notifyEmployee
     };
+
+    console.log("Données du quart à sauvegarder:", shiftData);
 
     if (onSave) {
       onSave(shiftData);
