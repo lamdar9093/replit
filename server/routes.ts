@@ -12,6 +12,15 @@ import {
 } from "@shared/schema";
 import { authenticate, checkPermission } from "./middleware";
 
+interface ShareScheduleData {
+  emails: string[];
+  message: string;
+  startDate: string;
+  endDate: string;
+  departmentFilter: string;
+  includeNotes: boolean;
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Helper function to validate request body with zod schema
   function validateRequest(req: Request, schema: any) {
@@ -624,6 +633,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create the HTTP server
+  // Share schedule by email
+  app.post('/api/schedule/share-email', authenticate, checkPermission('viewShifts'), async (req, res) => {
+    try {
+      const shareData = req.body as ShareScheduleData;
+      
+      if (!shareData.emails || !Array.isArray(shareData.emails) || shareData.emails.length === 0) {
+        return res.status(400).json({ message: 'Veuillez fournir au moins une adresse email valide' });
+      }
+      
+      // Valider le format des dates
+      const startDate = new Date(shareData.startDate);
+      const endDate = new Date(shareData.endDate);
+      
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        return res.status(400).json({ message: 'Format de date invalide' });
+      }
+      
+      // Récupérer les quarts pour la période
+      const shifts = await storage.getShiftsByDateRange(startDate, endDate);
+      
+      // Récupérer les utilisateurs concernés
+      const users = await storage.getUsers();
+      
+      // Filtrer par département si spécifié
+      const filteredShifts = shareData.departmentFilter !== 'all'
+        ? shifts.filter(shift => shift.department === shareData.departmentFilter)
+        : shifts;
+      
+      // En production, on enverrait un vrai email ici
+      // Pour le moment, on simule l'envoi et on trace l'activité
+      
+      // Formater les dates pour l'affichage
+      const startFormatted = startDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+      const endFormatted = endDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+      const dateRange = `${startFormatted} - ${endFormatted}`;
+      
+      // Créer une activité pour le partage
+      await storage.createActivity({
+        type: 'schedule_shared',
+        description: `Horaire du ${dateRange} partagé avec ${shareData.emails.length} personne(s)`,
+        userId: req.currentUser?.id || null,
+      });
+      
+      // On pourrait notifier les utilisateurs concernés via le système de messagerie interne
+      
+      res.json({ 
+        success: true, 
+        message: `Horaire partagé avec ${shareData.emails.length} destinataire(s)`,
+        recipients: shareData.emails,
+        dateRange
+      });
+    } catch (error) {
+      console.error("Erreur lors du partage d'horaire:", error);
+      res.status(500).json({ message: "Une erreur est survenue lors du partage de l'horaire" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
