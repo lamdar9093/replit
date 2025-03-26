@@ -5,6 +5,7 @@ import {
   insertUserSchema,
   insertDepartmentSchema,
   insertShiftSchema,
+  updateShiftSchema,
   insertTimeOffRequestSchema,
   insertActivitySchema,
   insertMessageSchema
@@ -374,7 +375,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Shift not found' });
       }
       
-      const shiftData = validateRequest(req, insertShiftSchema.partial());
+      const shiftData = validateRequest(req, updateShiftSchema);
       const updatedShift = await storage.updateShift(id, shiftData);
       
       // Récupérer l'utilisateur concerné
