@@ -43,6 +43,12 @@ export const shifts = pgTable("shifts", {
 
 export const insertShiftSchema = createInsertSchema(shifts).omit({
   id: true,
+}).transform((data) => {
+  // Assurez-vous que la date est un objet Date valide
+  return {
+    ...data,
+    date: new Date(data.date)
+  };
 });
 
 // Time off requests schema

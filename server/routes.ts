@@ -14,10 +14,13 @@ import { authenticate, checkPermission } from "./middleware";
 export async function registerRoutes(app: Express): Promise<Server> {
   // Helper function to validate request body with zod schema
   function validateRequest(req: Request, schema: any) {
+    console.log("Validating request body:", req.body);
     const result = schema.safeParse(req.body);
     if (!result.success) {
-      throw new Error(`Validation error: ${result.error.message}`);
+      console.error("Validation errors:", JSON.stringify(result.error, null, 2));
+      throw new Error(`Validation error: ${result.error.format()}`);
     }
+    console.log("Validation successful. Transformed data:", result.data);
     return result.data;
   }
 
@@ -292,18 +295,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/shifts', authenticate, checkPermission('createShift'), async (req, res) => {
     try {
-      const shiftData = validateRequest(req, insertShiftSchema);
-      const shift = await storage.createShift(shiftData);
+      console.log("Données reçues pour le quart:", req.body);
+      
+      // Valider les données entrantes
+      const validatedData = validateRequest(req, insertShiftSchema);
+      console.log("Données validées:", validatedData);
+      
+      const shift = await storage.createShift(validatedData);
       
       // Récupérer les informations de l'utilisateur pour l'activité et la notification
-      const user = await storage.getUser(shiftData.userId);
+      const user = await storage.getUser(validatedData.userId);
       if (user) {
+        // Formater la date pour l'affichage
+        const formattedDate = new Date(validatedData.date).toLocaleDateString('fr-FR', { 
+          weekday: 'long', 
+          day: 'numeric', 
+          month: 'long',
+          year: 'numeric'
+        });
+        
         // Créer une activité pour le nouveau quart
         await storage.createActivity({
           type: 'shift_added',
-          description: `Nouveau quart ajouté pour ${user.firstName} ${user.lastName} le ${new Date(shiftData.date).toLocaleDateString()}`,
+          description: `Nouveau quart ajouté pour ${user.firstName} ${user.lastName} le ${formattedDate}`,
           userId: req.currentUser?.id || null,
-          relatedUserId: shiftData.userId
+          relatedUserId: validatedData.userId
         });
         
         // Si notification est demandée, envoyer un message à l'employé
@@ -313,7 +329,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             senderId: req.currentUser?.id || null,
             receiverId: user.id,
             subject: "Nouveau quart de travail",
-            content: `Un nouveau quart de travail a été ajouté à votre horaire:\n\nDate: ${new Date(shiftData.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}\nHoraire: ${shiftData.startTime.substring(0, 5)} à ${shiftData.endTime.substring(0, 5)}\nDépartement: ${shiftData.department}`,
+            content: `Un nouveau quart de travail a été ajouté à votre horaire:\n\nDate: ${formattedDate}\nHoraire: ${validatedData.startTime.substring(0, 5)} à ${validatedData.endTime.substring(0, 5)}\nDépartement: ${validatedData.department}`,
             priority: "high",
             messageType: "notification"
           });
@@ -324,6 +340,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.status(201).json(shift);
     } catch (error) {
+      console.error("Erreur lors de la création du quart:", error);
       res.status(400).json({ message: (error as Error).message });
     }
   });
