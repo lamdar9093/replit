@@ -27,23 +27,25 @@ export default function MobileNavigation() {
         const Icon = item.icon;
         
         return (
-          <Link key={item.path} href={item.path}>
-            <a className="flex flex-col items-center py-1 px-3">
-              <Icon 
-                className={cn(
-                  "text-xl",
-                  isActive ? "text-primary" : "text-muted-foreground"
-                )} 
-              />
-              <span 
-                className={cn(
-                  "text-xs mt-1",
-                  isActive ? "text-primary" : "text-muted-foreground"
-                )}
-              >
-                {item.label}
-              </span>
-            </a>
+          <Link 
+            key={item.path} 
+            href={item.path}
+            className="flex flex-col items-center py-1 px-3"
+          >
+            <Icon 
+              className={cn(
+                "text-xl",
+                isActive ? "text-primary" : "text-muted-foreground"
+              )} 
+            />
+            <span 
+              className={cn(
+                "text-xs mt-1",
+                isActive ? "text-primary" : "text-muted-foreground"
+              )}
+            >
+              {item.label}
+            </span>
           </Link>
         );
       })}
