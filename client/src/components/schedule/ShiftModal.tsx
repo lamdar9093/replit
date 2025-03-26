@@ -138,24 +138,38 @@ export default function ShiftModal({ isOpen, onClose, shift, onSave, onDelete }:
       return;
     }
 
-    // S'assurer que la date est au bon format
-    const formattedDate = new Date(date);
-    
-    const shiftData = {
-      ...(shift?.id ? { id: shift.id } : {}),
-      userId: parseInt(employeeId),
-      date: formattedDate.toISOString(),
-      startTime: `${startTime}:00`,
-      endTime: `${endTime}:00`,
-      department,
-      notes,
-      notifyEmployee
-    };
+    try {
+      // S'assurer que la date est au bon format
+      // Créer une date avec année, mois, jour uniquement (sans heure) pour éviter les problèmes de fuseau horaire
+      const dateParts = date.split('-').map(part => parseInt(part));
+      const formattedDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], 12, 0, 0);
+      
+      if (isNaN(formattedDate.getTime())) {
+        throw new Error("Date invalide");
+      }
+      
+      const shiftData = {
+        ...(shift?.id ? { id: shift.id } : {}),
+        userId: parseInt(employeeId),
+        date: formattedDate.toISOString(),
+        startTime: `${startTime}:00`,
+        endTime: `${endTime}:00`,
+        department,
+        notes,
+        notifyEmployee
+      };
 
-    console.log("Données du quart à sauvegarder:", shiftData);
+      console.log("Données du quart à sauvegarder:", shiftData);
 
-    if (onSave) {
-      onSave(shiftData);
+      if (onSave) {
+        onSave(shiftData);
+      }
+    } catch (error) {
+      console.error("Erreur lors du formatage de la date:", error);
+      setErrors(prev => ({
+        ...prev,
+        date: "Format de date invalide"
+      }));
     }
   };
 

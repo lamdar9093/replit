@@ -18,8 +18,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log("Validating request body:", req.body);
     const result = schema.safeParse(req.body);
     if (!result.success) {
-      console.error("Validation errors:", JSON.stringify(result.error, null, 2));
-      throw new Error(`Validation error: ${result.error.format()}`);
+      const formattedError = JSON.stringify(result.error.format(), null, 2);
+      console.error("Validation errors:", formattedError);
+      throw new Error(`Validation error: ${formattedError}`);
     }
     console.log("Validation successful. Transformed data:", result.data);
     return result.data;

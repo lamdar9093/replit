@@ -41,31 +41,22 @@ export const shifts = pgTable("shifts", {
   notes: text("notes"),
 });
 
-// Schéma de base pour les quarts de travail (sans transformation)
-const baseShiftSchema = createInsertSchema(shifts).omit({
+// Schéma de base pour les quarts de travail qui convertit les dates string en objet Date
+const baseShiftSchema = createInsertSchema(shifts, {
+  date: z.preprocess(
+    // Cette fonction préprocesseur convertit toute valeur en string puis en objet Date
+    (val) => new Date(String(val)),
+    z.date()
+  )
+}).omit({
   id: true,
 });
 
-// Schéma pour insérer un nouveau quart (avec transformation de date)
-export const insertShiftSchema = baseShiftSchema.transform((data) => {
-  // Assurez-vous que la date est un objet Date valide
-  return {
-    ...data,
-    date: new Date(data.date)
-  };
-});
+// Schéma pour insérer un nouveau quart 
+export const insertShiftSchema = baseShiftSchema;
 
-// Schéma pour mettre à jour un quart (tous les champs sont optionnels, avec transformation de date)
-export const updateShiftSchema = baseShiftSchema.partial().transform((data) => {
-  // Si date est fournie, la transformer en objet Date
-  if (data.date) {
-    return {
-      ...data,
-      date: new Date(data.date)
-    };
-  }
-  return data;
-});
+// Schéma pour mettre à jour un quart (tous les champs sont optionnels)
+export const updateShiftSchema = baseShiftSchema.partial();
 
 // Time off requests schema
 export const timeOffRequests = pgTable("time_off_requests", {
