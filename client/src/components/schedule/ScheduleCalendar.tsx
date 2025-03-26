@@ -34,6 +34,27 @@ export default function ScheduleCalendar({ startDate, employees, shifts }: Sched
     };
   });
 
+  // Create shift mutation
+  const createShiftMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return apiRequest("POST", `/api/shifts`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/shifts'] });
+      toast({
+        title: "Quart ajouté",
+        description: "Le quart a été ajouté avec succès.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur",
+        description: `Échec de l'ajout du quart: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
+
   // Update shift mutation
   const updateShiftMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -183,9 +204,14 @@ export default function ScheduleCalendar({ startDate, employees, shifts }: Sched
     setIsEditModalOpen(true);
   };
 
-  // Handle shift edit
+  // Handle shift edit or create
   const handleShiftEdit = (updatedShift: any) => {
-    updateShiftMutation.mutate(updatedShift);
+    // Si le quart a un ID, c'est une modification, sinon c'est une création
+    if (updatedShift.id) {
+      updateShiftMutation.mutate(updatedShift);
+    } else {
+      createShiftMutation.mutate(updatedShift);
+    }
     setIsEditModalOpen(false);
   };
 
