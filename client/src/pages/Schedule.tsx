@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,11 +7,37 @@ import { Calendar, ChevronLeft, ChevronRight, CalendarPlus, Copy, Download } fro
 import ScheduleCalendar from "@/components/schedule/ScheduleCalendar";
 import ShiftModal from "@/components/schedule/ShiftModal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { apiRequest } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Schedule() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [isAddShiftModalOpen, setIsAddShiftModalOpen] = useState(false);
   const [filterDepartment, setFilterDepartment] = useState("all");
+  const { toast } = useToast();
+  
+  // Create shift mutation
+  const createShiftMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return apiRequest("POST", `/api/shifts`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/shifts'] });
+      toast({
+        title: "Quart ajouté",
+        description: "Le quart a été ajouté avec succès.",
+      });
+      setIsAddShiftModalOpen(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Erreur",
+        description: `Échec de l'ajout du quart: ${error.message}`,
+        variant: "destructive",
+      });
+    },
+  });
   
   // Calculate start of week (Monday)
   const startOfWeek = new Date(currentDate);
@@ -26,17 +52,17 @@ export default function Schedule() {
   const endFormatted = endOfWeek.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 
   // Get employees
-  const { data: employees } = useQuery({
+  const { data: employees = [] } = useQuery<any[]>({
     queryKey: ['/api/users'],
   });
 
   // Get departments
-  const { data: departments } = useQuery({
+  const { data: departments = [] } = useQuery<any[]>({
     queryKey: ['/api/departments'],
   });
 
   // Get shifts for current week
-  const { data: shifts } = useQuery({
+  const { data: shifts = [] } = useQuery<any[]>({
     queryKey: ['/api/shifts', { startDate: startOfWeek.toISOString(), endDate: endOfWeek.toISOString() }],
     queryFn: async () => {
       const res = await fetch(`/api/shifts?startDate=${startOfWeek.toISOString()}&endDate=${endOfWeek.toISOString()}`);
@@ -139,7 +165,8 @@ export default function Schedule() {
       {/* Add Shift Modal */}
       <ShiftModal 
         isOpen={isAddShiftModalOpen} 
-        onClose={() => setIsAddShiftModalOpen(false)} 
+        onClose={() => setIsAddShiftModalOpen(false)}
+        onSave={(shiftData) => createShiftMutation.mutate(shiftData)}
       />
     </Layout>
   );
