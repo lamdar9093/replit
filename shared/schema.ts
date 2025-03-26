@@ -84,10 +84,13 @@ export const insertActivitySchema = createInsertSchema(activities).omit({
 // Messages schema
 export const messages = pgTable("messages", {
   id: serial("id").primaryKey(),
-  senderId: integer("sender_id").notNull(),
+  senderId: integer("sender_id"),  // Peut être null pour les notifications système
   receiverId: integer("receiver_id").notNull(),
+  subject: text("subject"),  // Sujet du message (optionnel)
   content: text("content").notNull(),
   isRead: boolean("is_read").notNull().default(false),
+  priority: text("priority").default("normal"),  // Options: "low", "normal", "high"
+  messageType: text("message_type").default("message"),  // Options: "message", "notification"
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

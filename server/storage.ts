@@ -545,8 +545,35 @@ export class MemStorage implements IStorage {
 
   async createMessage(message: InsertMessage): Promise<Message> {
     const id = this.messageIdCounter++;
-    const newMessage: Message = { ...message, id, isRead: false, createdAt: new Date() };
+    
+    // Valeurs par défaut pour les nouveaux champs
+    const defaultValues = {
+      priority: message.priority || "normal",
+      messageType: message.messageType || "message",
+      subject: message.subject || null,
+      senderId: message.senderId !== undefined ? message.senderId : null
+    };
+    
+    const newMessage: Message = { 
+      ...message, 
+      ...defaultValues,
+      id, 
+      isRead: false, 
+      createdAt: new Date() 
+    };
+    
     this.messages.set(id, newMessage);
+    
+    // Si c'est une notification système, créer également une activité
+    if (message.messageType === "notification") {
+      await this.createActivity({
+        type: "notification_sent",
+        description: `Notification envoyée à l'utilisateur ID ${message.receiverId}: ${message.subject || ""}`,
+        userId: message.senderId || null,
+        relatedUserId: message.receiverId
+      });
+    }
+    
     return newMessage;
   }
 
