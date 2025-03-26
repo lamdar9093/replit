@@ -310,9 +310,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (req.body.notifyEmployee) {
           // Créer un message dans le système
           await storage.createMessage({
-            senderId: req.currentUser?.id || 1, // Si non authentifié, utiliser 1 (admin)
+            senderId: req.currentUser?.id || null,
             receiverId: user.id,
-            content: `Un nouveau quart de travail a été ajouté à votre horaire: ${new Date(shiftData.date).toLocaleDateString()} de ${shiftData.startTime.substring(0, 5)} à ${shiftData.endTime.substring(0, 5)} - ${shiftData.department}`
+            subject: "Nouveau quart de travail",
+            content: `Un nouveau quart de travail a été ajouté à votre horaire:\n\nDate: ${new Date(shiftData.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}\nHoraire: ${shiftData.startTime.substring(0, 5)} à ${shiftData.endTime.substring(0, 5)}\nDépartement: ${shiftData.department}`,
+            priority: "high",
+            messageType: "notification"
           });
           
           // Ici, on pourrait ajouter l'envoi d'un email à l'employé
@@ -372,9 +375,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (req.body.notifyEmployee) {
           // Créer un message dans le système
           await storage.createMessage({
-            senderId: req.currentUser?.id || 1,
+            senderId: req.currentUser?.id || null,
             receiverId: user.id,
-            content: `Votre quart de travail du ${new Date(existingShift.date).toLocaleDateString()} a été modifié. Nouveaux horaires: ${updatedShift.startTime.substring(0, 5)} à ${updatedShift.endTime.substring(0, 5)} - ${updatedShift.department}`
+            subject: "Modification de votre horaire",
+            content: `Votre quart de travail du ${new Date(existingShift.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} a été modifié.\n\nNouveaux horaires: ${updatedShift?.startTime.substring(0, 5) || ''} à ${updatedShift?.endTime.substring(0, 5) || ''} - ${updatedShift?.department || ''}`,
+            priority: "high",
+            messageType: "notification"
           });
           
           // Ici, on pourrait ajouter l'envoi d'un email à l'employé
@@ -419,9 +425,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.body.notifyEmployee) {
         // Créer un message dans le système
         await storage.createMessage({
-          senderId: req.currentUser?.id || 1,
+          senderId: req.currentUser?.id || null,
           receiverId: user.id,
-          content: `Votre quart de travail du ${new Date(shift.date).toLocaleDateString()} (${shift.startTime.substring(0, 5)} à ${shift.endTime.substring(0, 5)} - ${shift.department}) a été supprimé.`
+          subject: "Suppression d'un quart de travail",
+          content: `Votre quart de travail du ${new Date(shift.date).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })} (${shift.startTime.substring(0, 5)} à ${shift.endTime.substring(0, 5)} - ${shift.department}) a été supprimé.`,
+          priority: "high",
+          messageType: "notification"
         });
         
         // Ici, on pourrait ajouter l'envoi d'un email à l'employé

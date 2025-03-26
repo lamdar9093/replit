@@ -95,11 +95,13 @@ export default function ScheduleCalendar({ startDate, employees, shifts }: Sched
     const newDate = new Date(day);
     newDate.setHours(shiftDate.getHours(), shiftDate.getMinutes(), shiftDate.getSeconds());
     
-    updateShiftMutation.mutate({
+    // Ouvrir le modal de confirmation avec notification
+    setSelectedShift({
       ...draggedShift,
       userId: employeeId,
       date: newDate.toISOString()
     });
+    setIsEditModalOpen(true);
   };
 
   // Get shifts for a specific user and day
